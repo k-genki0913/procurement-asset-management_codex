@@ -1,0 +1,15 @@
+name: procurement-asset-management
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "127.0.0.1:18081:8080"
+    volumes:
+      - ./backend:/workspace/backend
+      - maven-cache:/home/developer/.m2
+    init: true
+
+volumes:
+  maven-cache:

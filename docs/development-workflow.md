@@ -103,5 +103,6 @@ gh pr create --base main --head feature/setup-development-workflow \
 - 開発の依頼はデスクトップアプリのCodexで行い、VS Codeでも変更を確認します。
 - Mac上のソースコードを利用し、アプリの実行・テスト環境はColimaとDockerで整備する予定です。
 - デスクトップ側のCodexが自動的にDev Container内で実行されるとは限らないため、環境構築時に共通の起動・テストコマンドを定めます。
-- 使用言語、フレームワーク、起動・テストコマンドは現時点では未決定です。決定後に文書を更新します。
+- Java 21・Spring Boot 4.1.1・Maven、React・TypeScript・Vite、PostgreSQL 18を採用します。環境構築は小さなPRに分け、マージ後に次の実装を開始します。
+- 導入済みの範囲と実行コマンドは[開発環境の手順](development-environment.md)を参照します。Maven依存は各タスクに必要なものだけを追加します。
 - Git操作はGit、PR操作はGitHub CLI（`gh`）で行えます。GitHubプラグインの追加を必須とはしません。
