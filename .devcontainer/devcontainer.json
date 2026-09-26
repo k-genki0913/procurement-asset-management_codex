@@ -1,0 +1,22 @@
+{
+  "name": "Procurement Java 21",
+  "dockerComposeFile": ["../compose.yaml", "compose.devcontainer.yaml"],
+  "service": "backend",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "developer",
+  "updateRemoteUserUID": false,
+  "shutdownAction": "none",
+  "customizations": {
+    "vscode": {
+      "extensions": ["redhat.java", "vscjava.vscode-java-debug"],
+      "settings": {
+        "java.jdt.ls.java.home": "/opt/java/openjdk",
+        "java.configuration.runtimes": [
+          { "name": "JavaSE-21", "path": "/opt/java/openjdk", "default": true }
+        ],
+        "java.import.gradle.enabled": false,
+        "remote.autoForwardPorts": false
+      }
+    }
+  }
+}

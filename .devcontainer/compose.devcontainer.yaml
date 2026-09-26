@@ -1,0 +1,4 @@
+services:
+  backend:
+    # Keep the editor connected while the application is stopped or restarted.
+    command: ["sleep", "infinity"]

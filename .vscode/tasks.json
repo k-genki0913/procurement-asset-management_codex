@@ -1,0 +1,28 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "backend: run",
+      "type": "process",
+      "command": "./mvnw",
+      "args": ["--batch-mode", "--no-transfer-progress", "spring-boot:run"],
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "backend: debug (wait for attach)",
+      "type": "process",
+      "command": "./mvnw",
+      "args": [
+        "--batch-mode",
+        "--no-transfer-progress",
+        "spring-boot:run",
+        "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:5005"
+      ],
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    }
+  ]
+}

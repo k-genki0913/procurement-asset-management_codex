@@ -4,6 +4,7 @@
 ## 開発環境
 
 現在はJava 21・Spring Boot 4.1.1のサーバー起動環境のみを用意しています。
+VS CodeのDev ContainersでJavaのコード解析とデバッグも行えます。
 MacへJavaやMavenをインストールせず、Colima・Docker Composeで実行します。
 
 - [サーバーの起動・確認手順](docs/development-environment.md)

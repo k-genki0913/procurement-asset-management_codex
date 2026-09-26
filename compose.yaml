@@ -7,7 +7,7 @@ services:
     ports:
       - "127.0.0.1:18081:8080"
     volumes:
-      - ./backend:/workspace/backend
+      - .:/workspace
       - maven-cache:/home/developer/.m2
     init: true
 
