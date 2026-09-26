@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: procurement-asset-management
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      discovery:
+        enabled: false
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+      probes:
+        enabled: false
