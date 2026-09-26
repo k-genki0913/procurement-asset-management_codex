@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Attach to backend (Dev Container)",
+      "request": "attach",
+      "hostName": "127.0.0.1",
+      "port": 5005,
+      "projectName": "procurement-asset-management"
+    }
+  ]
+}
