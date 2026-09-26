@@ -1,10 +1,10 @@
-# サーバーの開発環境
+# サーバーとDBの開発環境
 
 ## 今回できること
 
 Java 21・Spring Boot 4.1.1のアプリをコンテナで起動し、Actuatorで起動状態を確認します。業務API、画面、DB接続、認証、自動テスト基盤はまだありません。
 
-Dev ContainersでJavaのコード解析とデバッグを行えます。PostgreSQLとSPAはそれぞれ次のPRで追加します。各PRがマージされるまで次の実装は進めません。
+Dev ContainersでJavaのコード解析とデバッグを行えます。PostgreSQL 18は独立したサービスとして起動できますが、アプリとは未接続です。SPAは次のPRで追加します。各PRがマージされるまで次の実装は進めません。
 
 ## 構成と依存
 
@@ -32,7 +32,13 @@ Spring Bootの設定は`backend/src/main/resources/application.yaml`に統一し
 - `docker context show`が`colima`であり、`docker info`でサーバー情報が取得できることを確認します。Colimaが未起動なら`colima start`を実行します。
 - 初回はイメージ・Maven・依存ライブラリを取得するため、インターネット接続が必要です。
 - MacへJavaやMavenを追加インストールする必要はありません。
-- 今回は環境変数の入力が不要なので、`.env`やその見本は作成しません。必要になるPRで追加します。
+- 初回は`.env.example`を`.env`へコピーし、`POSTGRES_PASSWORD`をローカル開発専用の値へ変更します。既存の`.env`は上書きしません。`.env`はGit対象外です。
+
+```sh
+cp -n .env.example .env
+```
+
+`.env`はComposeの設定読み込みに必要です。DBサービスにのみ渡し、Spring BootにはDB設定を追加しません。`docker compose config`は値を表示するため、構文確認には`docker compose config --quiet`を使います。
 
 ## ビルドと起動
 
@@ -68,7 +74,7 @@ docker compose stop backend
 docker compose start backend
 ```
 
-コンテナと専用ネットワークを片付ける場合は次を実行します。Mavenキャッシュは残ります。
+コンテナと専用ネットワークを片付ける場合は次を実行します。MavenキャッシュとDBデータは残ります。
 
 ```sh
 docker compose down
@@ -149,3 +155,57 @@ docker compose up -d --build --force-recreate backend
 Dev Containerの待機構成で`docker compose restart backend`を実行してもアプリは起動しません。上記の再作成を使用してください。設定ファイルの変更後は`Dev Containers: Rebuild Container`で反映します。
 
 Git操作は従来どおりMac側のCodex・ターミナルで行います。コンテナにはGitやDocker CLI、Dockerソケットを追加していません。
+
+## PostgreSQL単体の起動・確認
+
+Mac側のリポジトリルートで実行します。以下はbackendを再作成しないため、Dev Containerでの作業にも影響しません。
+
+```sh
+docker compose up -d --wait db
+docker compose ps db
+docker compose exec db sh -c 'pg_isready -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "SELECT 1;"'
+```
+
+状態が`healthy`となり、SQL結果が`1`なら成功です。対話的にSQLを実行する場合は以下を使い、`\q`で終了します。
+
+```sh
+docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+```
+
+PostgreSQL 18.6のARM64対応イメージをダイジェストで固定しています。DBはコンテナ内の5432で待ち受け、Macの`127.0.0.1:15433`へ公開します。Mac上のDBクライアントから利用でき、他の端末向けには公開しません。既存の`spring-db`等とは、ポート・コンテナ・ネットワーク・ボリュームを分離しています。
+
+### MacのDBクライアントから接続する
+
+| 項目 | 設定値 |
+| --- | --- |
+| 接続種類 | PostgreSQL |
+| ホスト | `127.0.0.1` |
+| ポート | `15433` |
+| データベース | `.env`の`POSTGRES_DB`（見本では`procurement`） |
+| ユーザー | `.env`の`POSTGRES_USER`（見本では`procurement`） |
+| パスワード | `.env`の`POSTGRES_PASSWORD` |
+| SSLモード | `disable`（ローカル開発用。TLS未構成） |
+
+接続後、`SELECT 1;`でSQLが実行できることを確認します。パスワードは手順書やGitに転記しません。コンテナ同士で接続する際の接続先は`db:5432`で、Mac向けの`15433`とは異なります。
+
+設定変更の反映は`docker compose up -d --wait db`で行います。ポートが競合した場合は既存サービスを停止せず、`lsof -nP -iTCP:15433 -sTCP:LISTEN`と`docker ps`で使用状況を確認してください。
+
+DBデータは`procurement-asset-management_postgres-data`に保存します。PostgreSQL 18の公式イメージに合わせ、マウント先は`/var/lib/postgresql`です。ローカル開発用ユーザーは初期化管理者であり、本番の権限設計ではありません。
+
+### 停止・再起動とデータ保持
+
+```sh
+docker compose stop db
+docker compose up -d --wait db
+```
+
+通常の停止、コンテナ再作成、`docker compose down`ではデータを保持します。`down -v`やボリューム削除はデータを失うので通常操作には使用しません。
+
+`POSTGRES_DB`・`POSTGRES_USER`・`POSTGRES_PASSWORD`は空のデータ領域の初期化に使用されます。初期化後に`.env`だけを書き換えても既存DBや認証情報は変更されません。値を変える必要がある場合は既存DB側の変更手順を検討し、ボリュームを安易に削除しないでください。
+
+### サーバーとの分離
+
+backendにDBへの`depends_on`や接続ライブラリは追加していません。`.env`を準備したうえで`docker compose up -d backend`によりDBなしでもサーバーを起動できます。Dev Containersで開いた場合は通常どおりVS Codeの起動タスクを使用します。DB停止中でもActuatorの`UP`はDBの正常性を保証しません。
+
+DBが起動しない場合は`docker compose logs --tail=100 db`で確認します。初回のパスワード未設定や、すでに初期化済みのDBと`.env`の不一致を確認してください。
