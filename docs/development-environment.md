@@ -42,6 +42,8 @@ cp -n .env.example .env
 
 ## ビルドと起動
 
+サービス名を指定しない`docker compose up -d`では、backendとDBをまとめて起動します。
+
 ```sh
 docker compose build
 docker compose run --rm backend ./mvnw --batch-mode package
@@ -106,6 +108,10 @@ docker compose exec backend ./mvnw --version
 MacのVS Codeで閲覧できます。Javaのコード解析とデバッグは以下のDev Containers手順を使います。
 
 ## VS Codeでコンテナを開く
+
+Dev ContainersではbackendとDBの両コンテナを同時に起動する方針です。`devcontainer.json`の`runServices`は省略しているため、Composeに定義した両サービスが起動対象になります。VS Codeの接続先はbackendのみです。backend内のJavaアプリは待機状態で、DBは起動します。
+
+事前に「前提」の手順で`.env`を準備し、Mac側の`15433`番ポートが空いていることを確認してください。DBの起動失敗やポート競合は、Dev Containersで開く処理にも影響する可能性があります。競合時は「MacのDBクライアントから接続する」の確認手順を参照してください。
 
 1. Mac側でColimaを起動し、VS Codeでリポジトリのルートを開きます。
 2. コマンドパレット（Cmd+Shift+P）から`Dev Containers: Reopen in Container`を実行します。
@@ -207,5 +213,7 @@ docker compose up -d --wait db
 ### サーバーとの分離
 
 backendにDBへの`depends_on`や接続ライブラリは追加していません。`.env`を準備したうえで`docker compose up -d backend`によりDBなしでもサーバーを起動できます。Dev Containersで開いた場合は通常どおりVS Codeの起動タスクを使用します。DB停止中でもActuatorの`UP`はDBの正常性を保証しません。
+
+ここでの「独立」はアプリとDBに起動依存・接続設定がないことを意味し、Dev ContainersでDBを起動しないという意味ではありません。Dev Containersで開いた後、DBが不要ならMac側で`docker compose stop db`を実行してJavaの開発を続けられます。ただし、再度開く・再ビルドする際はDBも起動対象になります。
 
 DBが起動しない場合は`docker compose logs --tail=100 db`で確認します。初回のパスワード未設定や、すでに初期化済みのDBと`.env`の不一致を確認してください。
