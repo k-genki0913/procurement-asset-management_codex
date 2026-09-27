@@ -46,6 +46,29 @@ Codexが実装・検証を進め、ユーザーがレビュー・承認・判断
 - 承認後に仕様や変更範囲が大きく変わった場合は、変更点を示して再確認します。
 - ブランチ保護などGitHub側の強制ルールは別途設定するものです。この文書を追加するだけでは有効になりません。
 
+## GitHub側の保護設定
+
+学習内容を閲覧できるようにリポジトリはPublicを維持し、意図しない`main`の変更と秘密情報の流出を防ぐため、以下を設定しています（2026年9月27日確認）。現在の設定はGitHub側を正とし、設定を変更した場合はこの記録も更新します。
+
+| 設定 | 内容・目的 |
+| --- | --- |
+| `main-base-protection` | `main`の削除・強制プッシュを禁止し、変更はPR経由に限定します。バイパス（例外権限）は設けません。 |
+| `main-owner-merge-only` | `main`の更新を制限し、管理者に限りPR経由のマージを許可します。個人所有リポジトリのため、対象は所有者の管理者アカウントです。 |
+| PR作成制限 | リポジトリ全体を`Collaborators only`に設定しています。所有者以外の共同編集者を追加すると、その共同編集者もPRを作成できます。 |
+| Secret scanning・Push protection | 対応するAPIキーなどの秘密情報の検出と、それらを含むプッシュのブロックを有効にしています。 |
+| Dependabot alerts | 依存ライブラリの既知の脆弱性の検出・通知を有効にしています。修正PRを自動作成するDependabot security updatesは有効にしていません。 |
+
+一人開発では自分のPRを承認できないため、承認レビューの必須人数は0人としています。これは、コミット・プッシュ・PR作成前のユーザーレビューや、マージ前の判断を省略する意味ではありません。
+
+GitHubの権限制御はアカウント単位です。同じアカウントの認証情報を使うCLIやCodexの操作も同じ権限になるため、Codexによるマージには引き続きユーザーの明示的な指示が必要です。
+
+設定と検出結果は以下で確認します。個人のメールアドレスや通知設定の詳細は、このPublicリポジトリには記載しません。
+
+- [Settings → Rules → Rulesets](https://github.com/k-genki0913/procurement-asset-management_codex/settings/rules)：2つのRulesetの内容と有効状態
+- [Settings → General](https://github.com/k-genki0913/procurement-asset-management_codex/settings)：Features内のPR作成制限
+- [Settings → Advanced Security](https://github.com/k-genki0913/procurement-asset-management_codex/settings/security_analysis)：秘密情報の検出・プッシュ防止、Dependabot alertsの有効状態
+- [Security and quality](https://github.com/k-genki0913/procurement-asset-management_codex/security)：検出された秘密情報・脆弱性のアラート
+
 ## CodexのGit操作
 
 以下のコマンドは手順の例です。通常はCodexが実行し、ユーザーがすべて手入力する必要はありません。
