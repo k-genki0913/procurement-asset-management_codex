@@ -62,6 +62,16 @@ Codexが実装・検証を進め、ユーザーがレビュー・承認・判断
 
 GitHubの権限制御はアカウント単位です。同じアカウントの認証情報を使うCLIやCodexの操作も同じ権限になるため、Codexによるマージには引き続きユーザーの明示的な指示が必要です。
 
+### 所有者によるPRのマージ
+
+`main-owner-merge-only`はPRのマージも含めて更新を制限し、`Repository admin`にだけ`For pull requests only`のバイパス権限を付与しています。このため、所有者のPRでも`Merging is blocked`・`Cannot update this protected ref.`と表示されることがあります。
+
+所有者はPRの差分と他のマージ条件を確認したうえで、`Merge without waiting for requirements to be met (bypass rules)`にチェックを入れてマージします。これは更新者制限に対する例外権限を明示的に使う操作です。別の`main-base-protection`にはバイパス権限を設けていないため、PR必須・削除禁止・強制プッシュ禁止は引き続き適用されます。他の理由によるブロックがある場合は、その原因も確認します。
+
+現在の個人所有リポジトリでは、この例外権限を持つのは所有者の管理者アカウントだけです。一般ユーザーや、今後追加する管理者権限のない共同編集者には、このバイパス操作は提供されず、`main`へマージできません。共同編集者がPRを作成できることと、マージできることは別です。
+
+### 設定・検出結果の確認先
+
 設定と検出結果は以下で確認します。個人のメールアドレスや通知設定の詳細は、このPublicリポジトリには記載しません。
 
 - [Settings → Rules → Rulesets](https://github.com/k-genki0913/procurement-asset-management_codex/settings/rules)：2つのRulesetの内容と有効状態
