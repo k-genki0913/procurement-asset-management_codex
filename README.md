@@ -3,11 +3,11 @@
 
 ## 開発環境
 
-Java 21・Spring Boot 4.1.1のサーバーと、独立したPostgreSQL 18の起動環境を用意しています（アプリとDBは未接続）。
+Java 21・Spring Boot 4.1.1のサーバー、PostgreSQL 18、React・TypeScript・ViteのSPA起動確認画面を用意しています（各サービスは未接続）。
 VS CodeのDev ContainersでJavaのコード解析とデバッグも行えます。
-MacへJavaやMavenをインストールせず、Colima・Docker Composeで実行します。
+MacへJava・Maven・Node.jsをインストールせず、Colima・Docker Composeで実行します。
 
-- [サーバー・DBの起動・確認手順](docs/development-environment.md)
+- [SPA・サーバー・DBの起動・確認手順](docs/development-environment.md)
 - [開発とGitの作業手順](docs/development-workflow.md)
 
 環境構築はサーバー → Java用Dev Containers → PostgreSQL → SPAの順に、各PRをマージしてから次へ進めます。
