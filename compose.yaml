@@ -1,6 +1,16 @@
 name: procurement-asset-management
 
 services:
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "127.0.0.1:15173:5173"
+    volumes:
+      - ./frontend:/workspace/frontend
+      - frontend-node-modules:/workspace/frontend/node_modules
+    init: true
+
   backend:
     build:
       context: ./backend
@@ -28,5 +38,6 @@ services:
       start_period: 10s
 
 volumes:
+  frontend-node-modules:
   maven-cache:
   postgres-data:

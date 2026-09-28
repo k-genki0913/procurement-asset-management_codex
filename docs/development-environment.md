@@ -1,10 +1,10 @@
-# サーバーとDBの開発環境
+# SPA・サーバー・DBの開発環境
 
 ## 今回できること
 
-Java 21・Spring Boot 4.1.1のアプリをコンテナで起動し、Actuatorで起動状態を確認します。業務API、画面、DB接続、認証、自動テスト基盤はまだありません。
+Java 21・Spring Boot 4.1.1のアプリをコンテナで起動し、Actuatorで起動状態を確認します。React・TypeScript・ViteのSPAで起動確認画面を表示できます。業務API、業務画面、サービス間の接続、認証、自動テスト基盤はまだありません。
 
-Dev ContainersでJavaのコード解析とデバッグを行えます。PostgreSQL 18は独立したサービスとして起動できますが、アプリとは未接続です。SPAは次のPRで追加します。各PRがマージされるまで次の実装は進めません。
+Dev ContainersでJavaのコード解析とデバッグを行えます。PostgreSQL 18は独立したサービスとして起動できますが、アプリとは未接続です。SPAも独立したサービスとして起動し、API通信はまだ行いません。
 
 ## 構成と依存
 
@@ -31,7 +31,7 @@ Spring Bootの設定は`backend/src/main/resources/application.yaml`に統一し
 - リポジトリのルートで以下のコマンドを実行します。
 - `docker context show`が`colima`であり、`docker info`でサーバー情報が取得できることを確認します。Colimaが未起動なら`colima start`を実行します。
 - 初回はイメージ・Maven・依存ライブラリを取得するため、インターネット接続が必要です。
-- MacへJavaやMavenを追加インストールする必要はありません。
+- MacへJava・Maven・Node.jsを追加インストールする必要はありません。
 - 初回は`.env.example`を`.env`へコピーし、`POSTGRES_PASSWORD`をローカル開発専用の値へ変更します。既存の`.env`は上書きしません。`.env`はGit対象外です。
 
 ```sh
@@ -42,7 +42,7 @@ cp -n .env.example .env
 
 ## ビルドと起動
 
-サービス名を指定しない`docker compose up -d`では、backendとDBをまとめて起動します。
+サービス名を指定しない`docker compose up -d`では、frontend・backend・DBをまとめて起動します。
 
 ```sh
 docker compose build
@@ -76,7 +76,7 @@ docker compose stop backend
 docker compose start backend
 ```
 
-コンテナと専用ネットワークを片付ける場合は次を実行します。MavenキャッシュとDBデータは残ります。
+コンテナと専用ネットワークを片付ける場合は次を実行します。Mavenキャッシュ、frontendのnode_modules、DBデータは残ります。
 
 ```sh
 docker compose down
@@ -109,9 +109,9 @@ MacのVS Codeで閲覧できます。Javaのコード解析とデバッグは以
 
 ## VS Codeでコンテナを開く
 
-Dev ContainersではbackendとDBの両コンテナを同時に起動する方針です。`devcontainer.json`の`runServices`は省略しているため、Composeに定義した両サービスが起動対象になります。VS Codeの接続先はbackendのみです。backend内のJavaアプリは待機状態で、DBは起動します。
+Dev Containersではfrontend・backend・DBの3コンテナを同時に起動する方針です。`devcontainer.json`の`runServices`は省略しているため、Composeに定義した3サービスが起動対象になります。VS Codeの接続先はbackendのみです。backend内のJavaアプリは待機状態で、SPAの開発サーバーとDBは自動起動します。
 
-事前に「前提」の手順で`.env`を準備し、Mac側の`15433`番ポートが空いていることを確認してください。DBの起動失敗やポート競合は、Dev Containersで開く処理にも影響する可能性があります。競合時は「MacのDBクライアントから接続する」の確認手順を参照してください。
+事前に「前提」の手順で`.env`を準備し、Mac側の`15433`番・`15173`番ポートが他のサービスに使われていないことを確認してください。DBやfrontendの起動失敗・ポート競合は、Dev Containersで開く処理にも影響する可能性があります。競合時は「MacのDBクライアントから接続する」の確認手順を参照してください。
 
 1. Mac側でColimaを起動し、VS Codeでリポジトリのルートを開きます。
 2. コマンドパレット（Cmd+Shift+P）から`Dev Containers: Reopen in Container`を実行します。
@@ -217,3 +217,52 @@ backendにDBへの`depends_on`や接続ライブラリは追加していませ�
 ここでの「独立」はアプリとDBに起動依存・接続設定がないことを意味し、Dev ContainersでDBを起動しないという意味ではありません。Dev Containersで開いた後、DBが不要ならMac側で`docker compose stop db`を実行してJavaの開発を続けられます。ただし、再度開く・再ビルドする際はDBも起動対象になります。
 
 DBが起動しない場合は`docker compose logs --tail=100 db`で確認します。初回のパスワード未設定や、すでに初期化済みのDBと`.env`の不一致を確認してください。
+
+## SPAの起動・確認
+
+Mac側のリポジトリルートで実行します。frontendだけを操作するため、JavaのDev ContainerやDBは再作成しません。
+
+```sh
+docker compose up -d --build frontend
+docker compose logs -f frontend
+```
+
+ブラウザで <http://localhost:15173> を開き、「購買・備品管理アプリ」「開発環境の起動確認」が表示されることを確認します。これはSPA単体の確認画面であり、Spring BootやDBの接続状態を示すものではありません。
+
+Node.js 24のARM64対応イメージをダイジェスト固定し、非rootユーザーで実行します。コンテナの5173番をMacの`127.0.0.1:15173`に公開します。開発サーバーは本番公開には使用しません。
+
+### 依存とビルド
+
+| 用途 | ライブラリ・ツール |
+| --- | --- |
+| 画面描画 | React・React DOM |
+| 開発サーバー・ビルド | Vite・Reactプラグイン |
+| 型チェック | TypeScriptとReact・Node.jsの型定義 |
+| 静的検査 | ESLint、TypeScript用設定、React Hooks・Fast Refresh用ルール |
+
+ルーター、API通信、UIコンポーネント集、状態管理の追加ライブラリは導入していません。バージョンは`frontend/package.json`と`package-lock.json`で固定します。
+
+frontendは起動のたびに`npm ci`でロックファイルどおりに依存を入れ直してからViteを起動します。初回起動やキャッシュがない場合はネットワーク接続とダウンロード時間が必要です。インストールに失敗した場合はログを確認し、原因解消後に`docker compose restart frontend`を実行します。
+
+```sh
+docker compose exec frontend npm run typecheck
+docker compose exec frontend npm run lint
+docker compose exec frontend npm run build
+```
+
+`build`には型チェックも含みます。出力先は`frontend/dist/`です。生成物と`node_modules`はGit対象外で、`node_modules`は専用の`frontend-node-modules`ボリュームに格納します。MacとLinuxの依存ファイルを混在させないため、npm操作はfrontendコンテナで実行します。
+
+### 編集と自動反映
+
+`frontend/src/App.tsx`のメッセージを変更して保存すると、Viteが変更を検出してブラウザへ反映します。`frontend/src/style.css`で表示スタイルを変更できます。反映されない場合は`docker compose logs --tail=50 frontend`でエラーや更新ログを確認してください。依存ファイルを変更した場合はfrontendを再起動します。
+
+Java用Dev Containerではリポジトリ全体を共有しているため、画面のソースも編集できます。ただしNode.jsはfrontendコンテナ側にのみ用意しているので、npmの検査コマンドはMacのターミナルから上記のCompose経由で実行してください。
+
+### 停止・再起動
+
+```sh
+docker compose stop frontend
+docker compose start frontend
+```
+
+3サービスをまとめて通常起動する場合は`docker compose up -d --build`、まとめて停止する場合は`docker compose stop`です。Dev Containers用の待機構成から通常起動への切り替えは、前述の「VS Codeを閉じる・通常起動へ戻す」を参照してください。
