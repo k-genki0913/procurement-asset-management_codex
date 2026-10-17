@@ -6,6 +6,7 @@
 - [会社・業務の前提](docs/requirements/business-context.md)
 - [認証・認可と購入承認の要件](docs/requirements/authentication-authorization.md)
 - [アカウント変更の管理・通知・確認](docs/requirements/account-administration.md)
+- [購入申請の閲覧・操作と発注資料](docs/requirements/purchase-workflow.md)
 
 合意事項・提案・未決定事項を区別して記録しています。要件定義は途中であり、記載した業務機能が実装済みであることを意味しません。
 
